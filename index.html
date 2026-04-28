@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="data/records-data.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -53,7 +54,7 @@
           <h1 id="page-title">馬拉松世界紀錄每次刷新時間與日期</h1>
           <p class="hero-text">
             整理男子、女子、女子 mixed 與 women-only 紀錄進展，並用線性回歸檢查
-            R²、平均年度改善秒數與 2030-2040 預測。
+            R²、平均年度改善秒數與可調年份範圍預測。
           </p>
           <p class="source-note" id="source-note">資料載入中。</p>
         </div>
@@ -99,6 +100,32 @@
             <option value="1998">1998 至今</option>
             <option value="2010">2010 至今</option>
           </select>
+        </div>
+        <div class="axis-controls" aria-labelledby="axis-control-title">
+          <div class="axis-head">
+            <div>
+              <p class="control-label" id="axis-control-title">橫軸年份上下限</p>
+              <p class="control-helper" id="axis-summary">拖曳年份範圍，預測會延伸到右側上限。</p>
+            </div>
+            <button type="button" class="reset-button" id="axis-reset">
+              <i data-lucide="rotate-ccw"></i>
+              重設
+            </button>
+          </div>
+          <div class="axis-grid">
+            <label class="range-field" for="x-min-range">
+              <span>起始年份</span>
+              <output class="mono" id="x-min-output" for="x-min-range x-min-input">1905</output>
+              <input id="x-min-range" type="range" min="1900" max="2200" step="1" />
+              <input id="x-min-input" type="number" min="1900" max="2200" step="1" inputmode="numeric" />
+            </label>
+            <label class="range-field" for="x-max-range">
+              <span>結束年份</span>
+              <output class="mono" id="x-max-output" for="x-max-range x-max-input">2040</output>
+              <input id="x-max-range" type="range" min="1900" max="2200" step="1" />
+              <input id="x-max-input" type="number" min="1900" max="2200" step="1" inputmode="numeric" />
+            </label>
+          </div>
         </div>
       </section>
 

@@ -200,6 +200,7 @@ def parse_records(html: str) -> list[Record]:
 
 def main() -> int:
     out_path = Path("data/records.json")
+    js_out_path = Path("data/records-data.js")
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     records = parse_records(fetch(WIKIPEDIA_URL))
@@ -230,7 +231,12 @@ def main() -> int:
         "records": [record.__dict__ for record in records],
     }
     out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    print(f"Wrote {len(records)} records to {out_path}")
+    js_out_path.write_text(
+        "window.MARATHON_RECORDS = "
+        + json.dumps(payload, ensure_ascii=False, indent=2)
+        + ";\n"
+    )
+    print(f"Wrote {len(records)} records to {out_path} and {js_out_path}")
     return 0
 
 

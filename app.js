@@ -26,11 +26,18 @@ const ERAS = {
   2010: { label: "2010 至今", start: 2010 },
 };
 
-const FORECAST_YEARS = [2030, 2035, 2040];
+const AXIS_LIMITS = {
+  min: 1900,
+  max: 2200,
+  minGap: 5,
+  defaultMax: 2040,
+};
 
 const state = {
   collection: "men",
   era: "1980",
+  axisMin: null,
+  axisMax: null,
   payload: null,
   chart: null,
 };
@@ -39,6 +46,14 @@ const elements = {
   sourceNote: document.querySelector("#source-note"),
   collectionButtons: document.querySelector("#collection-buttons"),
   eraSelect: document.querySelector("#era-select"),
+  axisSummary: document.querySelector("#axis-summary"),
+  axisReset: document.querySelector("#axis-reset"),
+  xMinRange: document.querySelector("#x-min-range"),
+  xMaxRange: document.querySelector("#x-max-range"),
+  xMinInput: document.querySelector("#x-min-input"),
+  xMaxInput: document.querySelector("#x-max-input"),
+  xMinOutput: document.querySelector("#x-min-output"),
+  xMaxOutput: document.querySelector("#x-max-output"),
   latestRecord: document.querySelector("#latest-record"),
   latestDetail: document.querySelector("#latest-detail"),
   r2Value: document.querySelector("#r2-value"),
@@ -83,6 +98,93 @@ function formatDelta(deltaSeconds) {
   if (Math.abs(deltaSeconds) < 0.5) return "持平";
   const label = deltaSeconds < 0 ? "快" : "慢";
   return `${label} ${formatTime(Math.abs(deltaSeconds))}`;
+}
+
+function defaultAxisMin(records) {
+  return Math.max(
+    AXIS_LIMITS.min,
+    Math.floor(Math.min(...records.map((record) => record.decimal_year)) / 5) * 5,
+  );
+}
+
+function initializeAxis(records) {
+  if (state.axisMin !== null && state.axisMax !== null) return;
+  state.axisMin = defaultAxisMin(records);
+  state.axisMax = AXIS_LIMITS.defaultMax;
+}
+
+function clampAxis(minValue, maxValue) {
+  let min = Number.parseInt(minValue, 10);
+  let max = Number.parseInt(maxValue, 10);
+
+  if (!Number.isFinite(min)) min = AXIS_LIMITS.min;
+  if (!Number.isFinite(max)) max = AXIS_LIMITS.defaultMax;
+
+  min = Math.max(AXIS_LIMITS.min, Math.min(min, AXIS_LIMITS.max - AXIS_LIMITS.minGap));
+  max = Math.max(min + AXIS_LIMITS.minGap, Math.min(max, AXIS_LIMITS.max));
+  return { min, max };
+}
+
+function updateAxis(which, value) {
+  const current = { min: state.axisMin, max: state.axisMax };
+  if (which === "min") current.min = value;
+  if (which === "max") current.max = value;
+  const next = clampAxis(current.min, current.max);
+  state.axisMin = next.min;
+  state.axisMax = next.max;
+  render();
+}
+
+function resetAxis() {
+  const records = state.payload.records;
+  state.axisMin = defaultAxisMin(records);
+  state.axisMax = AXIS_LIMITS.defaultMax;
+  render();
+}
+
+function syncAxisControls() {
+  const inputs = [
+    elements.xMinRange,
+    elements.xMaxRange,
+    elements.xMinInput,
+    elements.xMaxInput,
+  ];
+  inputs.forEach((input) => {
+    input.min = AXIS_LIMITS.min;
+    input.max = AXIS_LIMITS.max;
+  });
+
+  elements.xMinRange.max = state.axisMax - AXIS_LIMITS.minGap;
+  elements.xMinInput.max = state.axisMax - AXIS_LIMITS.minGap;
+  elements.xMaxRange.min = state.axisMin + AXIS_LIMITS.minGap;
+  elements.xMaxInput.min = state.axisMin + AXIS_LIMITS.minGap;
+
+  elements.xMinRange.value = state.axisMin;
+  elements.xMinInput.value = state.axisMin;
+  elements.xMaxRange.value = state.axisMax;
+  elements.xMaxInput.value = state.axisMax;
+  elements.xMinOutput.textContent = state.axisMin;
+  elements.xMaxOutput.textContent = state.axisMax;
+  elements.axisSummary.textContent =
+    `目前橫軸顯示 ${state.axisMin} 到 ${state.axisMax} 年；` +
+    `預測線與預測表會延伸到 ${state.axisMax} 年。`;
+}
+
+function forecastYears(latestYear) {
+  if (state.axisMax <= latestYear) return [];
+
+  const years = [];
+  let year = Math.ceil((latestYear + 0.01) / 5) * 5;
+  while (year <= state.axisMax) {
+    years.push(year);
+    year += 5;
+  }
+
+  if (!years.includes(state.axisMax)) {
+    years.push(state.axisMax);
+  }
+
+  return [...new Set(years)].sort((a, b) => a - b);
 }
 
 function linearRegression(records) {
@@ -188,7 +290,17 @@ function renderForecast(records, model) {
     return;
   }
 
-  elements.forecastBody.innerHTML = FORECAST_YEARS.map((year) => {
+  const years = forecastYears(latest.decimal_year);
+  if (years.length === 0) {
+    elements.forecastBody.innerHTML = `
+      <tr>
+        <td colspan="3">右側年份上限未超過最新紀錄年份，沒有未來預測點。</td>
+      </tr>
+    `;
+    return;
+  }
+
+  elements.forecastBody.innerHTML = years.map((year) => {
     const prediction = model.predict(year);
     return `
       <tr>
@@ -238,21 +350,32 @@ function renderChart(records, modelRecords, model) {
     : [];
 
   const latest = records[records.length - 1];
+  const years = latest ? forecastYears(latest.decimal_year) : [];
   const forecastData =
     model && latest
       ? [
           { x: latest.decimal_year, y: model.predict(latest.decimal_year) },
-          ...FORECAST_YEARS.map((year) => ({ x: year, y: model.predict(year) })),
+          ...years.map((year) => ({ x: year, y: model.predict(year) })),
         ]
       : [];
 
-  const allY = [...actualData, ...fitData, ...forecastData].map((point) => point.y);
+  const allY = [
+    ...actualData.filter((point) => point.x >= state.axisMin && point.x <= state.axisMax),
+    ...fitData.filter((point) => point.x >= state.axisMin && point.x <= state.axisMax),
+    ...forecastData.filter((point) => point.x >= state.axisMin && point.x <= state.axisMax),
+  ].map((point) => point.y);
+
+  if (model) {
+    allY.push(model.predict(state.axisMin), model.predict(state.axisMax));
+  }
+
+  if (allY.length === 0) {
+    allY.push(...actualData.map((point) => point.y));
+  }
+
   const minY = Math.min(...allY);
   const maxY = Math.max(...allY);
   const yPadding = Math.max(60, (maxY - minY) * 0.08);
-
-  const minX = Math.floor(records[0].decimal_year / 5) * 5;
-  const maxX = Math.max(2040, Math.ceil(records[records.length - 1].decimal_year));
 
   if (state.chart) {
     state.chart.destroy();
@@ -322,8 +445,8 @@ function renderChart(records, modelRecords, model) {
       scales: {
         x: {
           type: "linear",
-          min: minX,
-          max: maxX,
+          min: state.axisMin,
+          max: state.axisMax,
           title: {
             display: true,
             text: "年份",
@@ -364,10 +487,12 @@ function updateActiveButtons() {
 
 function render() {
   const records = selectedRecords();
+  initializeAxis(state.payload.records);
   const modelRecords = selectedModelRecords(records);
   const model = linearRegression(modelRecords);
 
   updateActiveButtons();
+  syncAxisControls();
   renderSummary(records, modelRecords, model);
   renderForecast(records, model);
   renderTable(records);
@@ -379,9 +504,7 @@ function render() {
 }
 
 async function boot() {
-  const response = await fetch("data/records.json");
-  if (!response.ok) throw new Error(`Unable to load records: ${response.status}`);
-  state.payload = await response.json();
+  state.payload = await loadRecords();
 
   elements.sourceNote.textContent =
     `資料更新日 ${state.payload.generated_at}，共 ${state.payload.records.length} 筆紀錄。` +
@@ -399,7 +522,28 @@ async function boot() {
     render();
   });
 
+  elements.xMinRange.addEventListener("input", (event) => updateAxis("min", event.target.value));
+  elements.xMinInput.addEventListener("change", (event) => updateAxis("min", event.target.value));
+  elements.xMaxRange.addEventListener("input", (event) => updateAxis("max", event.target.value));
+  elements.xMaxInput.addEventListener("change", (event) => updateAxis("max", event.target.value));
+  elements.axisReset.addEventListener("click", resetAxis);
+
   render();
+}
+
+async function loadRecords() {
+  if (location.protocol === "file:" && window.MARATHON_RECORDS) {
+    return window.MARATHON_RECORDS;
+  }
+
+  try {
+    const response = await fetch("data/records.json");
+    if (!response.ok) throw new Error(`Unable to load records: ${response.status}`);
+    return response.json();
+  } catch (error) {
+    if (window.MARATHON_RECORDS) return window.MARATHON_RECORDS;
+    throw error;
+  }
 }
 
 boot().catch((error) => {

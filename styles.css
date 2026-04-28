@@ -37,12 +37,14 @@ a {
 
 button,
 select,
+input,
 a {
   touch-action: manipulation;
 }
 
 button:focus-visible,
 select:focus-visible,
+input:focus-visible,
 a:focus-visible {
   outline: 3px solid var(--color-ring);
   outline-offset: 3px;
@@ -260,7 +262,8 @@ h2 {
 }
 
 .segmented button,
-select {
+select,
+.range-field input[type="number"] {
   min-height: 44px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
@@ -280,7 +283,8 @@ select {
 }
 
 .segmented button:hover,
-select:hover {
+select:hover,
+.range-field input[type="number"]:hover {
   border-color: var(--color-primary);
 }
 
@@ -294,6 +298,89 @@ select {
   width: 100%;
   padding: 0 12px;
   cursor: pointer;
+}
+
+.axis-controls {
+  grid-column: 1 / -1;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+.axis-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.control-helper {
+  margin: -2px 0 0;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.reset-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-foreground);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reset-button:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.axis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.range-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.range-field span {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.range-field output {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.range-field input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.range-field input[type="number"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 0 12px;
+  font-family: "Fira Code", monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 .kpi-grid {
@@ -599,6 +686,16 @@ svg {
 
   .control-band {
     padding: 14px;
+  }
+
+  .axis-head,
+  .axis-grid {
+    display: block;
+  }
+
+  .reset-button,
+  .range-field {
+    margin-top: 12px;
   }
 
   .segmented button {
