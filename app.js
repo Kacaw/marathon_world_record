@@ -135,6 +135,11 @@ function updateAxis(which, value) {
   render();
 }
 
+function stepAxis(which, amount) {
+  const value = which === "min" ? state.axisMin : state.axisMax;
+  updateAxis(which, value + amount);
+}
+
 function resetAxis() {
   const records = state.payload.records;
   state.axisMin = defaultAxisMin(records);
@@ -526,6 +531,11 @@ async function boot() {
   elements.xMinInput.addEventListener("change", (event) => updateAxis("min", event.target.value));
   elements.xMaxRange.addEventListener("input", (event) => updateAxis("max", event.target.value));
   elements.xMaxInput.addEventListener("change", (event) => updateAxis("max", event.target.value));
+  document.querySelectorAll("[data-axis-step]").forEach((button) => {
+    button.addEventListener("click", () => {
+      stepAxis(button.dataset.axisStep, Number.parseInt(button.dataset.step, 10));
+    });
+  });
   elements.axisReset.addEventListener("click", resetAxis);
 
   render();

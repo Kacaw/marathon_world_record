@@ -6,6 +6,7 @@
 - 男子、女子全部、女子 mixed / standard、女子 women-only 分類切換
 - 線性回歸、R² 判讀、年度平均改善秒數
 - 可調橫軸年份上下限，預測可延伸到更遠年份
+- Hero photo is stored locally under `assets/` so the page works from both `file://` and GitHub Pages.
 
 ## Local Preview
 

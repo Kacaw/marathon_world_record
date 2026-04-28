@@ -266,7 +266,7 @@ select,
 .range-field input[type="number"] {
   min-height: 44px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--color-surface);
   color: var(--color-foreground);
   font: inherit;
@@ -350,19 +350,19 @@ select {
 .range-field {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 8px 12px;
+  gap: 12px;
   padding: 14px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: #fbfdff;
 }
 
-.range-field span {
+.range-title {
   color: var(--color-muted);
   font-weight: 700;
 }
 
-.range-field output {
+.year-output {
   color: var(--color-primary);
   font-weight: 700;
 }
@@ -376,11 +376,49 @@ select {
 }
 
 .range-field input[type="number"] {
-  grid-column: 1 / -1;
   width: 100%;
-  padding: 0 12px;
+  min-width: 82px;
+  padding: 0 8px;
+  border: 0;
+  text-align: center;
   font-family: "Fira Code", monospace;
   font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.range-field input[type="number"]::-webkit-outer-spin-button,
+.range-field input[type="number"]::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.year-stepper {
+  grid-column: 1 / -1;
+  width: max-content;
+  max-width: 100%;
+  display: inline-grid;
+  grid-template-columns: 44px minmax(82px, 9ch) 44px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.year-stepper button {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.year-stepper button:hover {
+  background: var(--color-surface-alt);
 }
 
 .kpi-grid {

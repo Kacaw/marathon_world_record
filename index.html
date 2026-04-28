@@ -14,11 +14,11 @@
       href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=3" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
     <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
-    <script src="data/records-data.js" defer></script>
-    <script src="app.js" defer></script>
+    <script src="data/records-data.js?v=3" defer></script>
+    <script src="app.js?v=3" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">跳到主要內容</a>
@@ -60,12 +60,14 @@
         </div>
         <figure class="hero-media">
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Kelvin_Kiptum_2023_Chicago_Marathon.jpg/640px-Kelvin_Kiptum_2023_Chicago_Marathon.jpg"
+            src="assets/marathon-runner.jpg"
             alt="Kelvin Kiptum 在 2023 芝加哥馬拉松世界紀錄賽中的照片"
-            width="640"
-            height="960"
+            width="960"
+            height="1440"
           />
-          <figcaption>資料頁保留最新紀錄狀態，含 pending ratification 標記。</figcaption>
+          <figcaption>
+            Kelvin Kiptum 2023 Chicago Marathon。資料頁保留最新紀錄狀態，含 pending ratification 標記。
+          </figcaption>
         </figure>
       </section>
 
@@ -114,16 +116,32 @@
           </div>
           <div class="axis-grid">
             <label class="range-field" for="x-min-range">
-              <span>起始年份</span>
-              <output class="mono" id="x-min-output" for="x-min-range x-min-input">1905</output>
+              <span class="range-title">起始年份</span>
+              <output class="mono year-output" id="x-min-output" for="x-min-range x-min-input">1905</output>
               <input id="x-min-range" type="range" min="1900" max="2200" step="1" />
-              <input id="x-min-input" type="number" min="1900" max="2200" step="1" inputmode="numeric" />
+              <span class="year-stepper">
+                <button type="button" data-axis-step="min" data-step="-5" aria-label="起始年份減少五年">
+                  <i data-lucide="minus"></i>
+                </button>
+                <input id="x-min-input" type="number" min="1900" max="2200" step="1" inputmode="numeric" />
+                <button type="button" data-axis-step="min" data-step="5" aria-label="起始年份增加五年">
+                  <i data-lucide="plus"></i>
+                </button>
+              </span>
             </label>
             <label class="range-field" for="x-max-range">
-              <span>結束年份</span>
-              <output class="mono" id="x-max-output" for="x-max-range x-max-input">2040</output>
+              <span class="range-title">結束年份</span>
+              <output class="mono year-output" id="x-max-output" for="x-max-range x-max-input">2040</output>
               <input id="x-max-range" type="range" min="1900" max="2200" step="1" />
-              <input id="x-max-input" type="number" min="1900" max="2200" step="1" inputmode="numeric" />
+              <span class="year-stepper">
+                <button type="button" data-axis-step="max" data-step="-5" aria-label="結束年份減少五年">
+                  <i data-lucide="minus"></i>
+                </button>
+                <input id="x-max-input" type="number" min="1900" max="2200" step="1" inputmode="numeric" />
+                <button type="button" data-axis-step="max" data-step="5" aria-label="結束年份增加五年">
+                  <i data-lucide="plus"></i>
+                </button>
+              </span>
             </label>
           </div>
         </div>
