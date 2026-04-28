@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="馬拉松世界紀錄進展、線性回歸關係與未來成績預測視覺化。"
+    />
+    <title>Marathon World Record Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js" defer></script>
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要內容</a>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#main" aria-label="Marathon World Record Lab 首頁">
+          <span class="brand-mark" aria-hidden="true">
+            <i data-lucide="timer"></i>
+          </span>
+          <span>
+            <strong>Marathon WR Lab</strong>
+            <small>世界紀錄進展與預測</small>
+          </span>
+        </a>
+        <nav class="source-nav" aria-label="資料來源">
+          <a href="data/records.json" download>
+            <i data-lucide="database"></i>
+            JSON
+          </a>
+          <a href="#records-table-section">
+            <i data-lucide="table-2"></i>
+            全部紀錄
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero-band" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <p class="eyebrow">World Athletics progression dataset</p>
+          <h1 id="page-title">馬拉松世界紀錄每次刷新時間與日期</h1>
+          <p class="hero-text">
+            整理男子、女子、女子 mixed 與 women-only 紀錄進展，並用線性回歸檢查
+            R²、平均年度改善秒數與 2030-2040 預測。
+          </p>
+          <p class="source-note" id="source-note">資料載入中。</p>
+        </div>
+        <figure class="hero-media">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Kelvin_Kiptum_2023_Chicago_Marathon.jpg/640px-Kelvin_Kiptum_2023_Chicago_Marathon.jpg"
+            alt="Kelvin Kiptum 在 2023 芝加哥馬拉松世界紀錄賽中的照片"
+            width="640"
+            height="960"
+          />
+          <figcaption>資料頁保留最新紀錄狀態，含 pending ratification 標記。</figcaption>
+        </figure>
+      </section>
+
+      <section class="control-band" aria-label="分析設定">
+        <div>
+          <label class="control-label">紀錄分類</label>
+          <div class="segmented" role="group" aria-label="選擇紀錄分類" id="collection-buttons">
+            <button type="button" class="is-active" data-collection="men">
+              <i data-lucide="activity"></i>
+              男子
+            </button>
+            <button type="button" data-collection="womenAll">
+              <i data-lucide="list-tree"></i>
+              女子全部
+            </button>
+            <button type="button" data-collection="womenMixed">
+              <i data-lucide="merge"></i>
+              女子 Mixed
+            </button>
+            <button type="button" data-collection="womenOnly">
+              <i data-lucide="user-round"></i>
+              Women-only
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="control-label" for="era-select">回歸期間</label>
+          <select id="era-select">
+            <option value="full">全部歷史</option>
+            <option value="1970">1970 至今</option>
+            <option value="1980" selected>1980 至今</option>
+            <option value="1998">1998 至今</option>
+            <option value="2010">2010 至今</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="kpi-grid" aria-label="分析摘要">
+        <article class="metric-card">
+          <span>最新紀錄</span>
+          <strong id="latest-record">--</strong>
+          <small id="latest-detail">--</small>
+        </article>
+        <article class="metric-card">
+          <span>線性關係</span>
+          <strong id="r2-value">--</strong>
+          <small id="r2-detail">--</small>
+        </article>
+        <article class="metric-card">
+          <span>年度改善</span>
+          <strong id="slope-value">--</strong>
+          <small>線性模型的斜率</small>
+        </article>
+        <article class="metric-card">
+          <span>模型樣本</span>
+          <strong id="sample-count">--</strong>
+          <small id="sample-detail">--</small>
+        </article>
+      </section>
+
+      <section class="analysis-grid">
+        <article class="chart-panel" aria-labelledby="chart-title">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Time series + regression</p>
+              <h2 id="chart-title">紀錄時間趨勢圖</h2>
+            </div>
+            <div class="legend-list" aria-label="圖例">
+              <span><b class="legend actual"></b> 實際紀錄</span>
+              <span><b class="legend fit"></b> 線性回歸</span>
+              <span><b class="legend forecast"></b> 預測</span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas
+              id="record-chart"
+              aria-label="馬拉松世界紀錄時間序列與線性回歸圖"
+              role="img"
+            ></canvas>
+          </div>
+        </article>
+
+        <aside class="insight-panel" aria-labelledby="insight-title">
+          <p class="eyebrow">Model readout</p>
+          <h2 id="insight-title">線性關係判讀</h2>
+          <p id="insight-copy">資料載入中。</p>
+          <div class="forecast-table-wrap">
+            <table>
+              <caption>
+                未來成績預測
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">年份</th>
+                  <th scope="col">預測時間</th>
+                  <th scope="col">相較最新紀錄</th>
+                </tr>
+              </thead>
+              <tbody id="forecast-body"></tbody>
+            </table>
+          </div>
+        </aside>
+      </section>
+
+      <section id="records-table-section" class="records-section" aria-labelledby="records-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Complete progression</p>
+            <h2 id="records-title">每次世界紀錄列表</h2>
+          </div>
+          <p id="table-caption">依目前分類顯示。</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">
+              目前分類的馬拉松世界紀錄進展表
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">日期</th>
+                <th scope="col">時間</th>
+                <th scope="col">選手</th>
+                <th scope="col">國籍</th>
+                <th scope="col">賽事 / 地點</th>
+                <th scope="col">類型 / 狀態</th>
+                <th scope="col">備註</th>
+              </tr>
+            </thead>
+            <tbody id="records-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        線性預測是描述歷史趨勢的統計模型，不代表生理極限或賽事條件保證。資料以
+        <a href="https://en.wikipedia.org/wiki/Marathon_world_record_progression">Wikipedia progression table</a>
+        為基礎，並以
+        <a href="https://worldathletics.org/news/report/sawe-two-hour-assefa-world-record-london-marathon">World Athletics 2026 London report</a>
+        與相關 ratification press releases 標示最新狀態。
+      </p>
+    </footer>
+  </body>
+</html>
