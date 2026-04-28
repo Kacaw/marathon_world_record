@@ -135,6 +135,18 @@ function updateAxis(which, value) {
   render();
 }
 
+function commitAxisInput(which, value, options = {}) {
+  const text = String(value).trim();
+  if (!options.force && !/^\d{4,}$/.test(text)) return;
+  updateAxis(which, text);
+}
+
+function handleAxisInputKeydown(which, event) {
+  if (event.key !== "Enter") return;
+  commitAxisInput(which, event.currentTarget.value, { force: true });
+  event.currentTarget.blur();
+}
+
 function stepAxis(which, amount) {
   const value = which === "min" ? state.axisMin : state.axisMax;
   updateAxis(which, value + amount);
@@ -528,9 +540,17 @@ async function boot() {
   });
 
   elements.xMinRange.addEventListener("input", (event) => updateAxis("min", event.target.value));
-  elements.xMinInput.addEventListener("change", (event) => updateAxis("min", event.target.value));
+  elements.xMinInput.addEventListener("input", (event) => commitAxisInput("min", event.target.value));
+  elements.xMinInput.addEventListener("change", (event) =>
+    commitAxisInput("min", event.target.value, { force: true }),
+  );
+  elements.xMinInput.addEventListener("keydown", (event) => handleAxisInputKeydown("min", event));
   elements.xMaxRange.addEventListener("input", (event) => updateAxis("max", event.target.value));
-  elements.xMaxInput.addEventListener("change", (event) => updateAxis("max", event.target.value));
+  elements.xMaxInput.addEventListener("input", (event) => commitAxisInput("max", event.target.value));
+  elements.xMaxInput.addEventListener("change", (event) =>
+    commitAxisInput("max", event.target.value, { force: true }),
+  );
+  elements.xMaxInput.addEventListener("keydown", (event) => handleAxisInputKeydown("max", event));
   document.querySelectorAll("[data-axis-step]").forEach((button) => {
     button.addEventListener("click", () => {
       stepAxis(button.dataset.axisStep, Number.parseInt(button.dataset.step, 10));
